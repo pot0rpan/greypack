@@ -1,5 +1,5 @@
-// [greypack] 0.0.1
-// Author: Pot
+// [greypack] 0.1.0
+// Author: pot
 
 if params.len < 1 or params[0] == "-h" or params[0] == "--help" or params[0] == "help" then
 	print("<b>Usage: greypack [file.src] [options]</b>\n<b>")
