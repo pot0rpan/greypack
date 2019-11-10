@@ -94,12 +94,13 @@ print(test)
 
 **Successful Build**
 
-![gpsuccess|525x440,100%](upload://n7B9DrJqcA8h2jIuz0n0XsG9MSv.png)
+![Screenshot of a successful build](https://github.com/pot-gh/greypack/blob/master/screenshots/gpsuccess.png)
 
 **Errors**
+
 If an error occurs during the assembling process, a trace of where the error occurred is printed to help with debugging.
 
-![gperror|525x221](upload://ku3Ad96Q0M40Zy9JkD4yBBEigpd.png)
+![Screenshot of a build error](https://github.com/pot-gh/greypack/blob/master/screenshots/gperror.png)
 
 ## Source Code
 
