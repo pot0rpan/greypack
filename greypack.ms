@@ -155,6 +155,12 @@ while true // Rebuild on Enter
 		lineNum = lineNum + 1
 	end for
 
+	// Make sure assembled file is under 80,000 character limit
+	if builtFileContent.len > 80000 then
+		print("<color=#ff44aa>Error: Assembled file is " + (builtFileContent.len - 80000) + " characters over max file size limit</color>")
+		buildError = true
+	end if
+
 	if not buildError then
 		// Create build folder to put full source in
 		if not buildFolder then
