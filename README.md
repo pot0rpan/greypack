@@ -5,17 +5,21 @@ Greypack is a code bundling tool based off of the JavaScript bundling tool Webpa
 ## Usage
 
 **Standard Usage**
+
 `greypack path/to/file.src`
 
 The fully assembled source file and the built binary file are both saved in a **/build** folder of the provided source file's directory by default. The following options allow more functionality:
 
 **Save copy of assembled .src file with timestamp**
+
 `greypack path/to/file.src -s`
 
 **Copy built file to /bin**
+
 `greypack path/to/file.src -b`
 
 **Run binary after building**
+
 `greypack path/to/file.src -r`
 
 ## Syntax
@@ -56,15 +60,40 @@ test = function()
 end function
 ```
 
+Currently only function imports are supported. If you need to access other functions in the same file as an imported function, make sure you include them too.
+
+**This will work**
+
+_mainFile.src_
+
+```
+import testA from "./functionsFile.src"
+import testB from "./functionsFile.src"
+
+print(testA)
+```
+
+_functionsFile.src_
+
+```
+testA = function()
+  return testB
+end function
+
+testB = function()
+  return "This works since all needed functions are imported"
+end function
+```
+
 #### Nested imported function
 
-Included functions can include their own external functions. Any other imports they rely on must be _inside_ their function body, unlike the main source file.
+Included functions can also include their own external functions. Any other imports they rely on must be inside their function body, or at the top of the main source file like the example above.
 
 ```
 test = function(message)
     import otherFunction from "./otherFunctions.src"
 
-    return "Recursion works too, " + otherFunction(message)
+    return "Nested imports work too, " + otherFunction(message)
 end function
 ```
 
@@ -80,7 +109,7 @@ import test from "../example/functionsFile.src"
 print(test)
 ```
 
-Final built version of _providedFile.src_
+Final assembled version of _providedFile.src_
 
 ```
 test = function()
