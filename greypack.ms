@@ -1,19 +1,26 @@
-// [greypack] 0.1.0
+// [greypack] 0.1.1
 // Author: pot
 
 if params.len < 1 or params[0] == "-h" or params[0] == "--help" or params[0] == "help" then
 	print("<b>Usage: greypack [file.src] [options]</b>\n<b>")
-	print("<b>-s, --save => Save full .src file in timestamped file</b>")
+	print("<b>-s, --save => Save copy of full .src file in timestamped file</b>")
 	print("<b>-b, --bin => Copy built file to /bin</b>")
 	exit("<b>-r, --run [run args] => Run file after building</b>")
 end if
 
+
+color = { "ERROR": "#FF44AA", "SUCCESS": "#44FF88", "INFO": "#44AAFF" }
+color.print = function(hex, text)
+	if not hex[0] == "#" then hex = "#" + hex
+	if not hex.len == 7 then print(text)
+	lines = text.split("\n")
+	for line in lines
+		print("<color=" + hex + ">" + line + "</color>")
+	end for
+end function
+
 getOptions = function()
-	options = {}
-	options.save = false
-	options.copyToBin = false
-	options.run = false
-	options.runArgs = ""
+	options = { "save": false, "copyToBin": false, "run": false, "runArgs": "" }
 
 	i = 1
 	while i < params.len
@@ -32,6 +39,27 @@ getOptions = function()
 	return options
 end function
 
+fixRelativePath = function(relPath, absPath)
+	// Set up if forward relative path ./
+	if relPath[:2] == "./" then
+		if not absPath[-1] == "/" then absPath = absPath + "/"
+		relPath = absPath + relPath.replace("./", "")
+	else if relPath[:3] == "../" then
+		// Set up if backwards relative path ../
+		relPathArr = relPath.split("/")
+		absPathArr = absPath.split("/")[1:-1] // remove leading/trailing "" in array
+
+		while relPathArr[0] == ".."
+			relPathArr.pull // remove ".."
+			absPathArr.pop // remove corresponding end of absPathArr
+		end while
+
+		relPath = "/" + (absPathArr.join("/") + "/" + relPathArr.join("/")) // construct absolute path
+	end if
+
+	return relPath
+end function
+
 // Return imported function lines if successful
 // Return null if not successful
 // Return unedited line if not an import statement
@@ -42,30 +70,11 @@ replaceImport = function(line, srcFileDir)
 	if arr.len >= 4 and arr[0].trim == "import" and arr[2].trim == "from" then
 		// Get function source file content
 		funcName = arr[1].trim
-		funcPath = arr[3].trim[1:-1] // remove ""
-
-		// Set up if forward relative path ./
-		if funcPath[:2] == "./" then
-			if not srcFileDir[-1] == "/" then srcFileDir = srcFileDir + "/"
-			funcPath = srcFileDir + funcPath.replace("./", "")
-		end if
-
-		// Set up if backwards relative path ../
-		if funcPath[:3] == "../" then
-			funcPathArr = funcPath.split("/")
-			srcPathArr = srcFileDir.split("/")[1:-1] // remove leading/trailing "" in array
-
-			while funcPathArr[0] == ".."
-				funcPathArr = funcPathArr[1:] // remove ".."
-				srcPathArr.pop // remove end of srcPathArr
-			end while
-
-			funcPath = "/" + (srcPathArr.join("/") + "/" + funcPathArr.join("/")) // construct absolute path
-		end if
+		funcPath = fixRelativePath(arr[3].trim[1:-1], srcFileDir) // [1:-1] removes "" around path
 
 		funcFile = get_shell.host_computer.File(funcPath)
 		if not funcFile then
-			print("<color=#ff44aa>Error: Could not find file <u>" + funcPath + "</u></color>")
+			color.print(color.ERROR, "Error: Could not find file <u>" + funcPath + "</u>")
 			return null
 		end if
 		funcFileContent = funcFile.content.split("\n")
@@ -77,7 +86,7 @@ replaceImport = function(line, srcFileDir)
 		_lineNum = 1
 		for _line in funcFileContent
 			// indexOf returns null if not found
-			if (not _line.indexOf(funcName + " ") == null or not _line.indexOf(funcName + "=") == null) and not _line.indexOf("=") == null and not _line.indexOf("function") == null then
+			if (_line.indexOf(funcName + " ") == 0 or _line.indexOf(funcName + "=") == 0) and not _line.indexOf("=") == null and not _line.indexOf("function") == null then
 				foundStart = true
 			end if
 
@@ -85,20 +94,20 @@ replaceImport = function(line, srcFileDir)
 				// Recursively search for more imports
 				recursive_line = replaceImport(_line, funcFile.path.split("/")[:-1].join("/"))
 				if not recursive_line then
-					print("<color=#ff44aa>Error: Could not resolve function <b>" + funcName + "</b> in <u>" + funcPath + "</u></color>")
-					print("<color=#ff44aa>[Line " + _lineNum + ": " + funcPath.split("/")[-1] + "]</color>")
+					color.print(color.ERROR, "Error: Could not resolve function <b>" + funcName + "</b> in <u>" + funcPath + "</u>")
+					color.print(color.ERROR, "[Line " + _lineNum + ": " + funcPath.split("/")[-1] + "]")
 					return null
 				end if
 
-				if not recursive_line == _line then
-					// Add recursively found function before current function
-					foundFunc = recursive_line + "\n\n" + foundFunc + "\n"
-				else
+				if recursive_line == _line then
 					// Just add current line of function
-					foundFunc = foundFunc + _line + "\n"
+					foundFunc = foundFunc + _line + "\n\n"
+				else
+					// Add recursively found function before current function
+					foundFunc = recursive_line + "\n\n" + foundFunc + "\n\n"
 				end if
 			end if
-			if not _line .indexOf("end function") == null then
+			if not _line.indexOf("end function") == null then
 				foundEnd = true
 			end if
 			_lineNum = _lineNum + 1
@@ -108,9 +117,9 @@ replaceImport = function(line, srcFileDir)
 		// Otherwise error out, since file wont build anyways
 		if foundStart and foundEnd then
 			line = foundFunc[:-2] // remove trailing \n
-			print("<color=#44aaff>Imported <b>" + funcName + "</b> from <u>" + funcPath + "</u></color>")
+			color.print(color.INFO, "Imported <b>" + funcName + "</b> from <u>" + funcPath + "</u>")
 		else
-			print("<color=#ff44aa>Error: Could not resolve function <b>" + funcName + "</b> in <u>" + funcPath + "</u></color>")
+			color.print(color.ERROR, "Error: Could not resolve function <b>" + funcName + "</b> in <u>" + funcPath + "</u>")
 			return null
 		end if
 	end if
@@ -118,15 +127,53 @@ replaceImport = function(line, srcFileDir)
 	return line // return successful imported function(s), or the unedited line
 end function
 
+assembleFile = function(srcFileLinesArr, srcFileDir, srcFileName)
+	assembledFileContent = ""
+	lineNum = 1
 
-print("<color=#44aaff><b>                    .   </b></color>")
-print("<color=#44aaff><b>,-.,-.,-.. ,-.,-.,-.| , </b></color>")
-print("<color=#44aaff><b>| ||  |-'| | |,-||  |<  </b></color>")
-print("<color=#44aaff><b>`-|'  `-'`-|-'`-^`-'' ` </b></color>")
-print("<color=#44aaff><b> ,|        |</b>   0.0.1    </color>")
-print("<color=#44aaff><b> `'      `-'            </b></color>")
+	for line in srcFileLinesArr
+		line = replaceImport(line, srcFileDir)
+		if not line then
+			color.print(color.ERROR, "[Line " + lineNum + ": " + srcFileName + "]")
+			return null
+		end if
+		assembledFileContent = assembledFileContent + line + "\n"
+		lineNum = lineNum + 1
+	end for
+
+	return assembledFileContent
+end function
+
+touchFolder = function(relativePath, folderName)
+	color.print(color.INFO, "Creating <b>/" + folderName + "</b> folder in .src file directory...")
+	get_shell.host_computer.create_folder(relativePath, folderName)
+	return comp.File(relativePath + folderName)
+end function
+
+touchFile = function(fileName, buildPath, content)
+	color.print(color.INFO, "Saving <b>" + fileName + "</b> file...")
+	get_shell.host_computer.touch(buildPath, fileName)
+	file = get_shell.host_computer.File(buildPath + "/" + fileName)
+	if content then file.set_content(content)
+	return file
+end function
+
+run = function(path, args)
+	fileName = path.split("/")[-1]
+	color.print(color.INFO, " \nRunning >> <b>" + fileName + " " + args + "</b>")
+	get_shell.launch(path, args)
+end function
 
 
+color.print(color.INFO, "<b>                    .   </b>")
+color.print(color.INFO, "<b>,-.,-.,-.. ,-.,-.,-.| , </b>")
+color.print(color.INFO, "<b>| ||  |-'| | |,-||  |<  </b>")
+color.print(color.INFO, "<b>`-|'  `-'`-|-'`-^`-'' ` </b>")
+color.print(color.INFO, "<b> ,|        |</b>   0.1.1    ")
+color.print(color.INFO, "<b> `'      `-'</b>    -pot    ")
+
+
+CHAR_LIMIT = 80000
 comp = get_shell.host_computer
 srcPath = params[0]
 srcFile = comp.File(srcPath)
@@ -136,77 +183,53 @@ buildFolder = comp.File(relativePath + buildFolderName)
 options = getOptions
 
 while true // Rebuild on Enter
-	print("<color=#44aaff>Parsing " + srcFile.name + "...</color>")
-	print("<color=#44aaff>Resolving imports...</color>")
-	srcFileContent = srcFile.content.split("\n")
-	buildError = false
+	color.print(color.INFO, "Parsing " + srcFile.name + "...")
+	color.print(color.INFO, "Resolving imports...")
+	srcFileLinesArr = srcFile.content.split("\n")
 
 	// Replace imports with their actual functions
-	builtFileContent = ""
-	lineNum = 1
-	for line in srcFileContent
-		line = replaceImport(line, srcFile.path.split("/")[:-1].join("/"))
-		if not line then
-			print("<color=#ff44aa>[Line " + lineNum + ": " + srcFile.name + "]</color>")
-			buildError = true
-			break
-		end if
-		builtFileContent = builtFileContent + line + "\n"
-		lineNum = lineNum + 1
-	end for
+	color.print(color.INFO, "Assembling full <b>" + srcFile.name + "</b> file...")
+	assembledFileContent = assembleFile(srcFileLinesArr, relativePath[:-1], srcFile.name)
 
 	// Make sure assembled file is under 80,000 character limit
-	if builtFileContent.len > 80000 then
-		print("<color=#ff44aa>Error: Assembled file is " + (builtFileContent.len - 80000) + " characters over max file size limit</color>")
-		buildError = true
+	if assembledFileContent and assembledFileContent.len > CHAR_LIMIT then
+		color.print(color.ERROR, "Error: Assembled file is " + (assembledFileContent.len - CHAR_LIMIT) + " characters over max file size limit")
+		assembledFileContent = null
 	end if
 
-	if not buildError then
-		// Create build folder to put full source in
-		if not buildFolder then
-			print("<color=#44aaff>Creating <b>/build</b> folder in .src file directory...</color>")
-			comp.create_folder(relativePath, buildFolderName)
-			buildFolder = comp.File(relativePath + buildFolderName)
-		end if
+	if assembledFileContent then
+		// Create build folder to put full source and binary in
+		if not buildFolder then buildFolder = touchFolder(relativePath, buildFolderName)
 
 		// Create file containing full source with imported functions
-		print("<color=#44aaff>Assembling full <b>" + srcFile.name + "</b> file...</color>")
-		comp.touch(buildFolder.path, srcFile.name)
-		buildFile = comp.File(buildFolder.path + "/" + srcFile.name)
-		buildFile.set_content(builtFileContent)
+		assembledFile = touchFile(srcFile.name, buildFolder.path, assembledFileContent)
 
 		// Create timestamped file if --save option
 		if options.save then
 			time = current_date.split(" ")[-1].replace(":", "")
 			timeFileName = srcFile.name.split(".").join(time + ".")
-			print("<color=#44aaff>Saving timestamped <b>" + timeFileName + "</b> file...</color>")
 			
 			// Touch is faster than copying
-			comp.touch(buildFolder.path, timeFileName)
-			timestampedFile = comp.File(buildFolder.path + "/" + timeFileName)
-			timestampedFile.set_content(builtFileContent)
+			touchFile(timeFileName, buildFolder.path, assembledFileContent)
 		end if
 
 		// Build completed file
-		print("<color=#44aaff>Building <b>" + srcFile.name[:-4] + "</b>...</color>")
-		get_shell.build(buildFile.path, buildFolder.path)
+		color.print(color.INFO, "Building <b>" + srcFile.name[:-4] + "</b>...")
+		get_shell.build(assembledFile.path, buildFolder.path)
 
 		// Copy built file to bin if --bin option
 		if options.copyToBin then
-			get_shell.build(buildFile.path, "/bin")
-			print("<color=#44aaff>Copying binary to <b>/bin</b>...</color>")
+			color.print(color.INFO, "Copying binary to <b>/bin</b>...")
+			get_shell.build(assembledFile.path, "/bin")
 		end if
 
-		print("<color=#44ff88>Done. Built files can be viewed in the /build folder of the source directory</color>")
+		color.print(color.SUCCESS, "Done. Built files can be viewed in the /build folder of the source directory")
 
 		// Run built file if --run option
-		if options.run then
-			print("\n<color=#44aaff>Running >> <b>" + srcFile.name[:-4] + " " + options.runArgs + "</b></color>")
-			get_shell.launch(buildFolder.path + "/" + srcFile.name[:-4], options.runArgs)
-		end if
+		if options.run then run(buildFolder.path + "/" + srcFile.name[:-4], options.runArgs)
 	end if // not buildError
 
 	andRun = ""
 	if options.run then andRun = " and run"
-	user_input("\n<color=#44aaff><b>Press Enter to rebuild" + andRun + ", or Ctrl+C to exit</b></color>")
+	user_input("\n<color=" + color.INFO + "><b>Press Enter to rebuild" + andRun + ", or Ctrl+C to exit</b></color>")
 end while
