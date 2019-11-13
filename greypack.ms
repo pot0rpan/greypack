@@ -192,7 +192,7 @@ color.print(color.INFO, "<b>                    .   </b>")
 color.print(color.INFO, "<b>,-.,-.,-.. ,-.,-.,-.| , </b>")
 color.print(color.INFO, "<b>| ||  |-'| | |,-||  |<  </b>")
 color.print(color.INFO, "<b>`-|'  `-'`-|-'`-^`-'' ` </b>")
-color.print(color.INFO, "<b> ,|        |</b>   0.1.1    ")
+color.print(color.INFO, "<b> ,|        |</b>   0.1.2    ")
 color.print(color.INFO, "<b> `'      `-'</b>    -pot    ")
 
 
