@@ -1,13 +1,15 @@
 // [greypack] 0.1.1
 // Author: pot
 
-if params.len < 1 or params[0] == "-h" or params[0] == "--help" or params[0] == "help" then
+if params.len < 1 or params[0] == "-h" or params[0] == "--help" or params[0] == "help" then exitUsage
+
+
+exitUsage = function()
 	print("<b>Usage: greypack [file.src] [options]</b>\n<b>")
 	print("<b>-s, --save => Save copy of full .src file in timestamped file</b>")
-	print("<b>-b, --bin => Copy built file to /bin</b>")
-	exit("<b>-r, --run [run args] => Run file after building</b>")
-end if
-
+	print("<b>-b, --bin => Copy built binary file to /bin</b>")
+	exit("<b>-r, --run ['run args'] => Run file after building with optional arguments</b>")
+end function
 
 color = { "ERROR": "#FF44AA", "SUCCESS": "#44FF88", "INFO": "#44AAFF" }
 color.print = function(hex, text)
@@ -19,19 +21,40 @@ color.print = function(hex, text)
 	end for
 end function
 
-getOptions = function()
+getParamOptions = function()
 	options = { "save": false, "copyToBin": false, "run": false, "runArgs": "" }
 
 	i = 1
 	while i < params.len
 		p = params[i]
+
 		if p == "-s" or p == "--save" then options.save = true
 		if p == "-b" or p == "--bin" then options.copyToBin = true
 		if p == "-r" or p == "--run" then
 			options.run = true
-			for arg in params[i + 1:]
-				options.runArgs = options.runArgs + " " + arg
-			end for
+			foundEnd = false
+			possibleRunArgs = params[i + 1:]
+
+			// Populate options.runArgs if in this syntax: 'run args'
+			if possibleRunArgs.len and possibleRunArgs[0][0] == "'" then
+				j = 0
+				runArgs = ""
+				
+				while j < possibleRunArgs.len and not foundEnd
+					arg = possibleRunArgs[j]
+					if arg[0] == "'" then arg = arg[1:] // remove leading '
+					if arg[-1] == "'" then
+						foundEnd = true
+						arg = arg[:-1]
+					end if
+					runArgs = runArgs + arg + " "
+					j = j + 1
+				end while
+				if not foundEnd then exitUsage
+
+				options.runArgs = runArgs.trim
+				i = i + j // continue loop from current spot
+			end if
 		end if
 		i = i + 1
 	end while
@@ -180,7 +203,7 @@ srcFile = comp.File(srcPath)
 relativePath = srcFile.path.split("/")[:-1].join("/") + "/"
 buildFolderName = "build"
 buildFolder = comp.File(relativePath + buildFolderName)
-options = getOptions
+options = getParamOptions
 
 while true // Rebuild on Enter
 	color.print(color.INFO, "Parsing " + srcFile.name + "...")
