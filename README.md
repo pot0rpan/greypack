@@ -1,4 +1,4 @@
-# **greypack v0.1.0**
+# **greypack v0.1.2**
 
 Greypack is a code bundling tool based off of the JavaScript bundling tool Webpack, and was also insipred by @cptnwinky's similar project [Gscript.Compiler](https://ghcommunity.cc/t/gscript-compiler/64).
 
@@ -20,9 +20,9 @@ The fully assembled source file and the built binary file are both saved in a **
 
 **Run binary after building**
 
-`greypack path/to/file.src -r [run args]`
+`greypack path/to/file.src -r ['run args']`
 
-## Syntax
+## Import Syntax
 
 #### Main source file
 
@@ -32,9 +32,9 @@ import test from "./functionsFile.src"
 print(test)
 ```
 
-This main source file should have all **import** statements at the top of the file. During the assembling process, all imported function definitions will replace those **import** statements.
+This main source file should have all `import` statements at the top of the file. During the assembling process, all imported function definitions will replace those `import` statements.
 
-Path can be absolute or relative. If relative, start with **"./"** to access the file's current directory, or use **"../"** to move up a directory.
+Path can be absolute or relative. If relative, start with `./` to access the file's current directory, or use `../` to move up a directory.
 
 #### Imported function
 
@@ -48,7 +48,7 @@ end function
 
 Currently, all imported functions must be self contained with no side-effects or reaching outside of their function body. Any external objects needed, like files, shells, or other functions should be passed into the function as arguments.
 
-Greypack does not yet parse included functions for anything other than **import** statements, so while the following code block may not throw any errors during the assembling process, it will NOT work.
+Greypack does not yet parse included functions for anything other than `import` statements, so while the following code block may not throw any errors during the assembling process, it will NOT work.
 
 _**THIS WILL NOT WORK:**_
 
@@ -62,7 +62,7 @@ end function
 
 Currently only function imports are supported. If you need to access other functions in the same file as an imported function, make sure you include them too.
 
-**This will work**
+**This will work**:
 
 _mainFile.src_
 
@@ -83,6 +83,22 @@ end function
 testB = function()
   return "This works since all needed functions are imported"
 end function
+```
+
+\*If you want to import a variable for usage, you can wrap it in a function, like in the example above where `testB` returns a string. It's an ugly and annoying workaround, but it works.
+
+_variables.src_
+
+```
+colors = function()
+  return { "red": "#FF0000", "green": "#00FF00", "blue": "#0000FF" }
+end function
+```
+
+```
+import colors from "./colors.src"
+
+print("<color=" + colors.green + ">This is how to access a variable</color>")
 ```
 
 #### Nested imported function
