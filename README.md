@@ -1,4 +1,6 @@
-# **greypack v0.1.2**
+\*\* New in v0.1.3: Import utility functions built into the new [greypack lib ↓](#greypack-lib)
+
+# **greypack v0.1.3**
 
 Greypack is a code bundling tool based off of the JavaScript bundling tool Webpack, and was also insipred by @cptnwinky's similar project [Gscript.Compiler](https://ghcommunity.cc/t/gscript-compiler/64).
 
@@ -133,6 +135,78 @@ test = function()
 end function
 
 print(test)
+```
+
+## Greypack Lib
+
+Starting with v0.1.3, greypack comes with some built-in utility functions, and will be adding more as new needs arise. Simply use the following syntax to include them in your project:
+
+`import functionName from "greypack"`
+
+Then to pass a function as an argument _without_ running it, add `@` to the beginning like:
+
+`@functionName`
+
+Listed below are the currently available functions and how to use them.
+
+**map(array, callback)**
+
+_"creates a new array with the results of calling a provided function on every element in the calling array" - [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map)_
+
+```
+import map from "greypack"
+
+array = [1, 2, 3]
+callback = function(element, index)
+	return element * index
+end function
+
+print(array) // [1, 2, 3]
+print(map(arr, @callback)) // [0, 2, 6]
+```
+
+**filter(array, callback)**
+
+_"creates a new array with all elements that pass the test implemented by the provided function" - [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter)_
+
+```
+import filter from "greypack"
+
+array = [1, 2, 3]
+callback = function(element, index)
+	return element > 1
+end function
+
+print(array) // [1, 2, 3]
+print(filter(array, @callback)) // [2, 3]
+```
+
+**reduce(array, callback)**
+
+_"executes a reducer function (that you provide) on each element of the array, resulting in a single output value" - [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/Reduce)_
+
+```
+import reduce from "greypack"
+
+arr = [1, 2, 3]
+callback = function(accumulator, currentValue, currentIndex, array)
+	return accumulator + currentValue
+end function
+
+print(arr) // [1, 2, 3]
+print(reduce(arr, @callback)) // 6
+```
+
+**includes(value, array)**
+
+_"determines whether an array includes a certain value among its entries, returning 1 or 0 as appropriate" - [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/includes)_
+
+```
+array = [1, 2, 3]
+
+print(array) // [1, 2, 3]
+print(includes(2, array)) // 1
+print(includes(4, array)) // 0
 ```
 
 ## Screenshots

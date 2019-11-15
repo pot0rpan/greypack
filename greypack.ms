@@ -1,8 +1,27 @@
-// [greypack] 0.1.2
+// [greypack] 0.1.3
 // Author: pot
 
 if params.len < 1 or params[0] == "-h" or params[0] == "--help" or params[0] == "help" then exitUsage
 
+
+importGreypackFunc = function(funcName)
+	funcStr = null
+	funcs = {}
+	funcs.map = "map=function(a,c)\nn=[]\ni=0\nfor el in a\nn.push(c(el,i))\ni=i+1\nend for\nreturn n\nend function"
+	funcs.filter = "filter=function(a, c)\nn=[]\ni=0\nfor e in a\nif c(e,i) then n.push(e)\ni=i+1\nend for\nreturn n\nend function"
+	funcs.reduce = "reduce=function(a,c,iv)\nac=null\ni=0\nif iv then\nac=iv\nelse\nac=a[0]\ni=i+1\nend if\nwhile i<a.len\nac=c(ac,a[i],i,a)\ni=i+1\nend while\nreturn ac\nend function"
+	funcs.includes = "includes=function(v,a)\nfor e in a\nif e==v then return true\nend for\nreturn false\nend function"
+
+	for func in funcs
+		if funcName == func.key then
+			color.print(color.INFO, "Imported <b>" + funcName + "</b> from the <u>greypack</u> lib")
+			return func.value + "\n"
+		end if
+	end for
+	
+	color.print(color.ERROR, "Error: <b>" + funcName + "</b> is not a valid greypack function")
+	return null
+end function
 
 exitUsage = function()
 	print("<b>Usage: greypack [file.src] [options]</b>\n<b>")
@@ -93,7 +112,14 @@ replaceImport = function(line, srcFileDir)
 	if arr.len >= 4 and arr[0].trim == "import" and arr[2].trim == "from" then
 		// Get function source file content
 		funcName = arr[1].trim
-		funcPath = fixRelativePath(arr[3].trim[1:-1], srcFileDir) // [1:-1] removes "" around path
+		funcPath = null
+
+		// Skip searching if importing a greypack function
+		if arr[3].trim[1:-1] == "greypack" then
+			return importGreypackFunc(funcName)
+		else
+			funcPath = fixRelativePath(arr[3].trim[1:-1], srcFileDir) // [1:-1] removes "" around path
+		end if
 
 		funcFile = get_shell.host_computer.File(funcPath)
 		if not funcFile then
@@ -192,7 +218,7 @@ color.print(color.INFO, "<b>                    .   </b>")
 color.print(color.INFO, "<b>,-.,-.,-.. ,-.,-.,-.| , </b>")
 color.print(color.INFO, "<b>| ||  |-'| | |,-||  |<  </b>")
 color.print(color.INFO, "<b>`-|'  `-'`-|-'`-^`-'' ` </b>")
-color.print(color.INFO, "<b> ,|        |</b>   0.1.2    ")
+color.print(color.INFO, "<b> ,|        |</b>   0.1.3    ")
 color.print(color.INFO, "<b> `'      `-'</b>    -pot    ")
 
 
