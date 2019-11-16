@@ -11,6 +11,7 @@ importGreypackFunc = function(funcName)
 	funcs.filter = "filter=function(a, c)\nn=[]\ni=0\nfor e in a\nif c(e,i) then n.push(e)\ni=i+1\nend for\nreturn n\nend function"
 	funcs.reduce = "reduce=function(a,c,iv)\nac=null\ni=0\nif iv then\nac=iv\nelse\nac=a[0]\ni=i+1\nend if\nwhile i<a.len\nac=c(ac,a[i],i,a)\ni=i+1\nend while\nreturn ac\nend function"
 	funcs.includes = "includes=function(v,a)\nfor e in a\nif e==v then return true\nend for\nreturn false\nend function"
+	funcs.test = "test = function(desc, func, argsArr, expected)\nn = argsArr.len\nresult = null\nif n == 0 then result = func\nif n == 1 then result = func(argsArr[0])\nif n == 2 then result = func(argsArr[0], argsArr[1])\nif n == 3 then result = func(argsArr[0], argsArr[1], argsArr[2])\nif n == 4 then result = func(argsArr[0], argsArr[1], argsArr[2], argsArr[3])\nif n == 5 then result = func(argsArr[0], argsArr[1], argsArr[2], argsArr[3], argsArr[4])\nif n == 6 then result = func(argsArr[0], argsArr[1], argsArr[2], argsArr[3], argsArr[4], argsArr[5])\nif n == 7 then result = func(argsArr[0], argsArr[1], argsArr[2], argsArr[3], argsArr[4], argsArr[5], argsArr[6])\nif n == 8 then result = func(argsArr[0], argsArr[1], argsArr[2], argsArr[3], argsArr[4], argsArr[5], argsArr[6], argsArr[7])\nif n == 9 then result = func(argsArr[0], argsArr[1], argsArr[2], argsArr[3], argsArr[4], argsArr[5], argsArr[6], argsArr[7], argsArr[8])\nif n == 10 then result = func(argsArr[0], argsArr[1], argsArr[2], argsArr[3], argsArr[4], argsArr[5], argsArr[6], argsArr[7], argsArr[8], argsArr[9])\nif expected == result then\nprint(""<color=#44ff66><b>SUCCESS:</b> "" + desc + ""</color>"")\nelse\nprint(""<color=#ff4488><b>FAIL:</b> "" + desc + ""</color>"")\nprint(""* Expected value to be: <color=#44ff66>"" + expected + ""</color>"")\nprint(""* Received: <color=#ff4488>"" + result + ""</color>"")\nend if\nend function"
 
 	for func in funcs
 		if funcName == func.key then
@@ -41,12 +42,13 @@ color.print = function(hex, text)
 end function
 
 getParamOptions = function()
-	options = { "save": false, "copyToBin": false, "run": false, "runArgs": "" }
+	options = { "test": false, "save": false, "copyToBin": false, "run": false, "runArgs": "" }
 
 	i = 1
 	while i < params.len
 		p = params[i]
 
+		if p == "-t" or p == "--test" then options.test = true
 		if p == "-s" or p == "--save" then options.save = true
 		if p == "-b" or p == "--bin" then options.copyToBin = true
 		if p == "-r" or p == "--run" then
@@ -224,12 +226,14 @@ color.print(color.INFO, "<b> `'      `-'</b>    -pot    ")
 
 CHAR_LIMIT = 80000
 comp = get_shell.host_computer
+options = getParamOptions
 srcPath = params[0]
 srcFile = comp.File(srcPath)
 relativePath = srcFile.path.split("/")[:-1].join("/") + "/"
+
 buildFolderName = "build"
+if options.test then buildFolderName = "gptest"
 buildFolder = comp.File(relativePath + buildFolderName)
-options = getParamOptions
 
 while true // Rebuild on Enter
 	color.print(color.INFO, "Parsing " + srcFile.name + "...")
@@ -275,7 +279,10 @@ while true // Rebuild on Enter
 		color.print(color.SUCCESS, "Done. Built files can be viewed in the /build folder of the source directory")
 
 		// Run built file if --run option
-		if options.run then run(buildFolder.path + "/" + srcFile.name[:-4], options.runArgs)
+		if options.run or options.test then run(buildFolder.path + "/" + srcFile.name[:-4], options.runArgs)
+
+		// Delete gptest folder if --test option
+		if options.test then buildFolder.delete
 	end if // not buildError
 
 	andRun = ""
