@@ -1,4 +1,4 @@
-// [greypack] 0.1.3
+// [greypack] 0.2.0
 // Author: pot
 
 printHeader = function()
@@ -6,7 +6,7 @@ printHeader = function()
 	color.print(color.INFO, "<b>,-.,-.,-.. ,-.,-.,-.| , </b>")
 	color.print(color.INFO, "<b>| ||  |-'| | |,-||  |<  </b>")
 	color.print(color.INFO, "<b>`-|'  `-'`-|-'`-^`-'' ` </b>")
-	color.print(color.INFO, "<b> ,|        |</b>   0.1.3    ")
+	color.print(color.INFO, "<b> ,|        |</b>   0.2.0    ")
 	color.print(color.INFO, "<b> `'      `-'</b>    -pot    ")
 end function
 
