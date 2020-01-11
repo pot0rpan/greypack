@@ -137,18 +137,21 @@ polyfill = function(line)
 	end if
 
 	i = operatorIndex - 1
-	start = false
+	foundVarEnd = false
 	while i > -1
-		// Check for space or tab
+		// Continue or exit loop if space or tab
 		if code(line[i]) == 32 or code(line[i]) == 9 then
-			if not start then
-				start = true
+			if not foundVarEnd then
+				// Keep walking back through spaces
 				i = i - 1
 				continue
 			else
+				// Found full variable name, exit loop
 				break
 			end if
 		end if
+
+		if not foundVarEnd then foundVarEnd = true
 
 		varName = line[i] + varName
 		i = i - 1
