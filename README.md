@@ -1,6 +1,8 @@
+\*\* New in v0.2.0: Added support for `+=` and `-=` [operators ↓](#operators)
+
 \*\* New in v0.1.3: Import utility functions built into the new [greypack lib ↓](#greypack-lib)
 
-# **greypack v0.1.3**
+# **greypack v0.2.0**
 
 Greypack is a code bundling tool based off of the JavaScript bundling tool Webpack, and was also insipred by @cptnwinky's similar project [Gscript.Compiler](https://ghcommunity.cc/t/gscript-compiler/64).
 
@@ -28,7 +30,7 @@ The fully assembled source file and the built binary file are both saved in a **
 
 #### Main source file
 
-```
+```lua
 import test from "./functionsFile.src"
 
 print(test)
@@ -42,9 +44,9 @@ Path can be absolute or relative. If relative, start with `./` to access the fil
 
 _functionsFile.src_
 
-```
+```lua
 test = function()
-    return "It works!"
+		return "It works!"
 end function
 ```
 
@@ -54,11 +56,11 @@ Greypack does not yet parse included functions for anything other than `import` 
 
 _**THIS WILL NOT WORK:**_
 
-```
+```lua
 str = "A string that will NOT be included, breaking the function"
 
 test = function()
-    return str
+		return str
 end function
 ```
 
@@ -68,7 +70,7 @@ Currently only function imports are supported. If you need to access other funct
 
 _mainFile.src_
 
-```
+```lua
 import testA from "./functionsFile.src"
 import testB from "./functionsFile.src"
 
@@ -77,13 +79,13 @@ print(testA)
 
 _functionsFile.src_
 
-```
+```lua
 testA = function()
-  return testB
+	return testB
 end function
 
 testB = function()
-  return "This works since all needed functions are imported"
+	return "This works since all needed functions are imported"
 end function
 ```
 
@@ -91,13 +93,13 @@ end function
 
 _variables.src_
 
-```
+```lua
 colors = function()
-  return { "red": "#FF0000", "green": "#00FF00", "blue": "#0000FF" }
+	return { "red": "#FF0000", "green": "#00FF00", "blue": "#0000FF" }
 end function
 ```
 
-```
+```lua
 import colors from "./colors.src"
 
 print("<color=" + colors.green + ">This is how to access a variable</color>")
@@ -107,11 +109,11 @@ print("<color=" + colors.green + ">This is how to access a variable</color>")
 
 Included functions can also include their own external functions. Any other imports they rely on must be inside their function body, or at the top of the main source file like the example above.
 
-```
+```lua
 test = function(message)
-    import otherFunction from "./otherFunctions.src"
+		import otherFunction from "./otherFunctions.src"
 
-    return "Nested imports work too, " + otherFunction(message)
+		return "Nested imports work too, " + otherFunction(message)
 end function
 ```
 
@@ -121,7 +123,7 @@ Here is what greypack does when assembling the final file:
 
 _providedFile.src_
 
-```
+```lua
 import test from "../example/functionsFile.src"
 
 print(test)
@@ -129,9 +131,9 @@ print(test)
 
 Final assembled version of _providedFile.src_
 
-```
+```lua
 test = function()
-    return "It works!"
+		return "It works!"
 end function
 
 print(test)
@@ -153,7 +155,7 @@ Listed below are the currently available functions and how to use them.
 
 _"creates a new array with the results of calling a provided function on every element in the calling array" - [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map)_
 
-```
+```lua
 import map from "greypack"
 
 array = [1, 2, 3]
@@ -169,7 +171,7 @@ print(map(arr, @callback)) // [0, 2, 6]
 
 _"creates a new array with all elements that pass the test implemented by the provided function" - [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter)_
 
-```
+```lua
 import filter from "greypack"
 
 array = [1, 2, 3]
@@ -185,7 +187,7 @@ print(filter(array, @callback)) // [2, 3]
 
 _"executes a reducer function (that you provide) on each element of the array, resulting in a single output value" - [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/Reduce)_
 
-```
+```lua
 import reduce from "greypack"
 
 arr = [1, 2, 3]
@@ -201,12 +203,39 @@ print(reduce(arr, @callback)) // 6
 
 _"determines whether an array includes a certain value among its entries, returning 1 or 0 as appropriate" - [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/includes)_
 
-```
+```lua
 array = [1, 2, 3]
 
 print(array) // [1, 2, 3]
 print(includes(2, array)) // 1
 print(includes(4, array)) // 0
+```
+
+## Operators
+
+Greypack adds support for operators available in other languages that aren't implemented in Grey Script. The following are currently supported:
+
+- `+=`
+- `-=`
+
+Example:
+
+```lua
+i = 0
+while i < 10
+	if i % 2 == 0 then i -= 1
+	i += 2
+end while
+```
+
+becomes:
+
+```lua
+i = 0
+while i < 10
+	if i % 2 == 0 then i = i - 1
+	i = i + 2
+end while
 ```
 
 ## Screenshots
