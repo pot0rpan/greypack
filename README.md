@@ -2,6 +2,10 @@
 
 \*\* New in v0.1.3: Import utility functions built into the new [greypack lib ↓](#greypack-lib)
 
+### Known Issues
+
+- Newline characters `"\n"` in strings get replaced by an actual newline inside the string. Makes assembled .src file look ugly, but still functions just fine.
+
 # **greypack v0.2.0**
 
 Greypack is a code bundling tool based off of the JavaScript bundling tool Webpack, and was also insipred by @cptnwinky's similar project [Gscript.Compiler](https://ghcommunity.cc/t/gscript-compiler/64).
