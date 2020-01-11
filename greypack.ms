@@ -1,8 +1,14 @@
 // [greypack] 0.1.3
 // Author: pot
 
-if params.len < 1 or params[0] == "-h" or params[0] == "--help" or params[0] == "help" then exitUsage
-
+printHeader = function()
+	color.print(color.INFO, "<b>                    .   </b>")
+	color.print(color.INFO, "<b>,-.,-.,-.. ,-.,-.,-.| , </b>")
+	color.print(color.INFO, "<b>| ||  |-'| | |,-||  |<  </b>")
+	color.print(color.INFO, "<b>`-|'  `-'`-|-'`-^`-'' ` </b>")
+	color.print(color.INFO, "<b> ,|        |</b>   0.1.3    ")
+	color.print(color.INFO, "<b> `'      `-'</b>    -pot    ")
+end function
 
 importGreypackFunc = function(funcName)
 	funcStr = null
@@ -214,13 +220,8 @@ run = function(path, args)
 end function
 
 
-color.print(color.INFO, "<b>                    .   </b>")
-color.print(color.INFO, "<b>,-.,-.,-.. ,-.,-.,-.| , </b>")
-color.print(color.INFO, "<b>| ||  |-'| | |,-||  |<  </b>")
-color.print(color.INFO, "<b>`-|'  `-'`-|-'`-^`-'' ` </b>")
-color.print(color.INFO, "<b> ,|        |</b>   0.1.3    ")
-color.print(color.INFO, "<b> `'      `-'</b>    -pot    ")
-
+if params.len < 1 or params[0] == "-h" or params[0] == "--help" or params[0] == "help" then exitUsage
+printHeader
 
 CHAR_LIMIT = 80000
 comp = get_shell.host_computer
