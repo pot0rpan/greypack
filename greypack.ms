@@ -108,11 +108,66 @@ fixRelativePath = function(relPath, absPath)
 	return relPath
 end function
 
+parseLine = function(line, srcFileDir)
+	if not srcFileDir[-1] == "/" then srcFileDir = srcFileDir + "/"
+
+	newLine = polyfill(line)
+	if not newLine then return newLine
+	newLine = replaceImport(newLine, srcFileDir)
+
+	return newLine
+end function
+
+// Replace += and -= if found
+// Return null if not successful
+// Return unedited line if normal line
+polyfill = function(line)
+	varName = ""
+	operator = null
+	operatorIndex = null
+
+	if not line.indexOf("+=") == null then
+		operator = "+="
+		operatorIndex = line.indexOf("+=")
+	else if not line.indexOf("-=") == null then
+		operator = "-="
+		operatorIndex = line.indexOf("-=")
+	else
+		return line
+	end if
+
+	i = operatorIndex - 1
+	start = false
+	while i > -1
+		// Check for space or tab
+		if code(line[i]) == 32 or code(line[i]) == 9 then
+			if not start then
+				start = true
+				i = i - 1
+				continue
+			else
+				break
+			end if
+		end if
+
+		varName = line[i] + varName
+		i = i - 1
+	end while
+
+	if not varName.len then
+		color.print(color.ERROR, "Error: Could not replace " + operator)
+		return null
+	end if
+
+	// Replace
+	varStartIndex = i + 1
+	return line[:varStartIndex] + varName + " = " + varName + " " + operator[0] + " " + line[operatorIndex + 2:].trim
+end function
+
 // Return imported function lines if successful
 // Return null if not successful
 // Return unedited line if not an import statement
 replaceImport = function(line, srcFileDir)
-	if not srcFileDir[-1] == "/" then srcFileDir = srcFileDir + "/"
 	arr = line.trim.split(" ")
 
 	if arr.len >= 4 and arr[0].trim == "import" and arr[2].trim == "from" then
@@ -146,7 +201,7 @@ replaceImport = function(line, srcFileDir)
 			end if
 
 			if foundStart and not foundEnd then
-				// Recursively search for more imports
+				// Recursively parse lines
 				recursive_line = replaceImport(_line, funcFile.path.split("/")[:-1].join("/"))
 				if not recursive_line then
 					color.print(color.ERROR, "Error: Could not resolve function <b>" + funcName + "</b> in <u>" + funcPath + "</u>")
@@ -183,20 +238,20 @@ replaceImport = function(line, srcFileDir)
 end function
 
 assembleFile = function(srcFileLinesArr, srcFileDir, srcFileName)
-	assembledFileContent = ""
+	assembledFileContent = []
 	lineNum = 1
 
 	for line in srcFileLinesArr
-		line = replaceImport(line, srcFileDir)
+		line = parseLine(line, srcFileDir)
 		if not line then
 			color.print(color.ERROR, "[Line " + lineNum + ": " + srcFileName + "]")
 			return null
 		end if
-		assembledFileContent = assembledFileContent + line + "\n"
+		assembledFileContent.push(line)
 		lineNum = lineNum + 1
 	end for
 
-	return assembledFileContent
+	return assembledFileContent.join("\n")
 end function
 
 touchFolder = function(relativePath, folderName)
